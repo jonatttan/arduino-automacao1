@@ -1,0 +1,8 @@
+Como um desenvolvedor
+quero construir um sistema que desligue as luzes durante o dia e as acione a noite
+para comodidade e menor consumo de energia
+Ok
+
+Como um desenvolvedor
+quero construir um sistema que alterne o fornecimento de energia de acordo com um comando, mas que priorize o cronograma automatizado
+para comodidade e economia
