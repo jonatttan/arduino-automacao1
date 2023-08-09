@@ -3,6 +3,12 @@ int acionador1 = 7;
 int acionador2 = 8;
 int luminosidade;
 int defDia = 80;
+int reles[2] = {acionador1, acionador2};
+
+enum State {
+  on = true,
+  off = false
+};
 
 void setup() {
   
@@ -20,10 +26,18 @@ void loop() {
   luminosidade = analogRead(sensorLuz);
   
   printFunction();
-  controleRele1();
-  controleRele2();
+//  controleRele1();
+//  controleRele2();
+  controleTodosReles();
   
   delay(3000);
+  
+}
+
+void setupInitialState() {
+  
+  digitalWrite(acionador1, HIGH);
+  digitalWrite(acionador2, HIGH);
   
 }
 
@@ -54,9 +68,18 @@ void controleRele2() {
   
 }
 
-void setupInitialState() {
+void controleTodosReles() {
   
-  digitalWrite(acionador1, HIGH);
-  digitalWrite(acionador2, HIGH);
+  if(luminosidade < defDia) {
+    mudaEstadoReles(on);
+  } else {
+    mudaEstadoReles(off);
+  }
   
+}
+
+void mudaEstadoReles(State estado) {
+  for (const int &n : reles) {
+    digitalWrite(n, !estado);
+  }
 }
