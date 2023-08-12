@@ -1,8 +1,13 @@
 Como um desenvolvedor
 quero construir um sistema que desligue as luzes durante o dia e as acione a noite
-para comodidade e menor consumo de energia
+para comodidade e menor consumo de energia.
 Ok
 
 Como um desenvolvedor
 quero construir um sistema que alterne o fornecimento de energia de acordo com um comando, mas que priorize o cronograma automatizado
-para comodidade e economia
+para comodidade e economia.
+Ok
+
+Como um desenvolvedor
+quero adicionar o comando para que interrompa o fornecimento de energia de um dos reles
+para que permaneça desligado até que desative a ordem manual ou que o sistema identifique novo crepúsculo.
