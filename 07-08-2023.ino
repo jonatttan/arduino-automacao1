@@ -5,12 +5,15 @@ int button1 = A1;
 // OUT
 int relay1 = 7;
 int relay2 = 8;
+int indicatorLight1 = 2;
+int indicatorLight2 = 3;
 
 // CONST
 const int defDay = 80;
 const int defActivationLights = 3;
 const int defDeactivationLights = 0;
 const int relays[2] = {relay1, relay2};
+const int defaultDelay = 1000;
 
 // VAR
 int counterOfCyclesForAction = 0;
@@ -26,6 +29,8 @@ void setup() {
   
   pinMode(relay1, OUTPUT);
   pinMode(relay2, OUTPUT);
+  pinMode(indicatorLight1, OUTPUT);
+  pinMode(indicatorLight2, OUTPUT);
   pinMode(button1, INPUT);
   
   Serial.begin(9600);
@@ -42,7 +47,7 @@ void loop() {
   turnOnLightsTemporarily();
   twilightControl();
   
-  delay(1000);
+  delay(defaultDelay);
   
 }
 
@@ -50,6 +55,8 @@ void setupInitialState() {
   
   digitalWrite(relay1, HIGH);
   digitalWrite(relay2, HIGH);
+  digitalWrite(indicatorLight1, LOW);
+  digitalWrite(indicatorLight2, LOW);
   
 }
 
@@ -76,23 +83,20 @@ void twilightControl() {
     } else if(luminosity > defDay && counterOfCyclesForAction > defDeactivationLights) {
       counterOfCyclesForAction --;
     } else {
-      decideAcionamento();
+      decideToTrigger();
     }
   }
 
 }
 
-void decideAcionamento() {
-
-  if(counterOfCyclesForAction == defActivationLights) {
-    mudaEstadorelays(on);
-  } else if(counterOfCyclesForAction == defDeactivationLights) {
-    mudaEstadorelays(off);
-  }
+void decideToTrigger() {
+  State state = (counterOfCyclesForAction == defActivationLights) ? on : off;
+  changeRalaysState(state);
+  digitalWrite(indicatorLight1, state);
 
 }
 
-void mudaEstadorelays(State estado) {
+void changeRalaysState(State estado) {
   for (const int &n : relays) {
     digitalWrite(n, !estado);
   }
@@ -101,9 +105,9 @@ void mudaEstadorelays(State estado) {
 void turnOnLightsTemporarily() {
 
   if(checkAction(button1)) {
-    // seria legal piscar um led aqui indicando ter recebido comando
-    mudaEstadorelays(on);
-    temporaryActivationCounter += 10;
+    changeRalaysState(on);
+    temporaryActivationCounter += 300; // With default dalay == 1000, this is five minutes
+    flashigLight(indicatorLight2);
   }
 
 }
@@ -115,5 +119,13 @@ bool checkAction(int elemento) {
   } else {
     return false;
   }
+
+}
+
+void flashigLight(int element) {
+
+  digitalWrite(element, HIGH);
+  delay(100);
+  digitalWrite(element, LOW);
 
 }
