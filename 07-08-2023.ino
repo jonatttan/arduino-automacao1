@@ -1,14 +1,21 @@
-int sensorLuz = A0;
-int botao1 = A1;
-int acionador1 = 7;
-int acionador2 = 8;
-int luminosidade;
-int defDia = 80;
-int contadorDeCiclosParaAcionamento = 0;
-int defAcionaLuzes = 3;
-int defApagaLuzes = 0;
-int reles[2] = {acionador1, acionador2};
-int acionamentoTemporario = 0;
+// IN
+int lightSensor = A0;
+int button1 = A1;
+
+// OUT
+int relay1 = 7;
+int relay2 = 8;
+
+// CONST
+const int defDay = 80;
+const int defActivationLights = 3;
+const int defDeactivationLights = 0;
+const int relays[2] = {relay1, relay2};
+
+// VAR
+int counterOfCyclesForAction = 0;
+int temporaryActivationCounter = 0;
+int luminosity;
 
 enum State {
   on = true,
@@ -17,9 +24,9 @@ enum State {
 
 void setup() {
   
-  pinMode(acionador1, OUTPUT);
-  pinMode(acionador2, OUTPUT);
-  pinMode(botao1, INPUT);
+  pinMode(relay1, OUTPUT);
+  pinMode(relay2, OUTPUT);
+  pinMode(button1, INPUT);
   
   Serial.begin(9600);
 
@@ -29,13 +36,11 @@ void setup() {
 
 void loop() {
   
-  luminosidade = analogRead(sensorLuz);
+  luminosity = analogRead(lightSensor);
   
   printFunction();
-//  controleRele1();
-//  controleRele2();
-  acionaLuzesTemporariamente();
-  controleCrepuscular();
+  turnOnLightsTemporarily();
+  twilightControl();
   
   delay(1000);
   
@@ -43,54 +48,33 @@ void loop() {
 
 void setupInitialState() {
   
-  digitalWrite(acionador1, HIGH);
-  digitalWrite(acionador2, HIGH);
+  digitalWrite(relay1, HIGH);
+  digitalWrite(relay2, HIGH);
   
 }
 
 void printFunction() {
   
-  Serial.print("Luminosidade atual: ");
-  Serial.println(luminosidade);
-  Serial.print(String("Contador para alteração de estado (") + defApagaLuzes + "-" + defAcionaLuzes + "): ");
-  Serial.println(contadorDeCiclosParaAcionamento);
-  Serial.print("Valor do Botao1: ");
-  Serial.println(analogRead(botao1));
+  Serial.print("luminosity atual: ");
+  Serial.println(luminosity);
+  Serial.print(String("Contador para alteração de estado (") + defDeactivationLights + "-" + defActivationLights + "): ");
+  Serial.println(counterOfCyclesForAction);
+  Serial.print("Valor do button1: ");
+  Serial.println(analogRead(button1));
   Serial.print("Acionamento temporário desliga em: ");
-  Serial.println(acionamentoTemporario);
+  Serial.println(temporaryActivationCounter);
   
 }
 
-// Ter apenas um controle para acionamento, passando rele por parâmetro, eliminando boilerplate
-void controleRele1() {
+void twilightControl() {
   
-  if(luminosidade < defDia) {
-    digitalWrite(acionador1, LOW);
+  if(luminosity < defDay && counterOfCyclesForAction < defActivationLights) {
+   counterOfCyclesForAction ++;
   } else {
-    digitalWrite(acionador1, HIGH);
-  }
-  
-}
-
-void controleRele2() {
-  
-  if(luminosidade < defDia) {
-    digitalWrite(acionador2, LOW);
-  } else {
-    digitalWrite(acionador2, HIGH);
-  }
-  
-}
-
-void controleCrepuscular() {
-  
-  if(luminosidade < defDia && contadorDeCiclosParaAcionamento < defAcionaLuzes) {
-   contadorDeCiclosParaAcionamento ++;
-  } else {
-    if(acionamentoTemporario > 0) {
-        acionamentoTemporario --;
-    } else if(luminosidade > defDia && contadorDeCiclosParaAcionamento > defApagaLuzes) {
-      contadorDeCiclosParaAcionamento --;
+    if(temporaryActivationCounter > 0) {
+        temporaryActivationCounter --;
+    } else if(luminosity > defDay && counterOfCyclesForAction > defDeactivationLights) {
+      counterOfCyclesForAction --;
     } else {
       decideAcionamento();
     }
@@ -100,26 +84,26 @@ void controleCrepuscular() {
 
 void decideAcionamento() {
 
-  if(contadorDeCiclosParaAcionamento == defAcionaLuzes) {
-    mudaEstadoReles(on);
-  } else if(contadorDeCiclosParaAcionamento == defApagaLuzes) {
-    mudaEstadoReles(off);
+  if(counterOfCyclesForAction == defActivationLights) {
+    mudaEstadorelays(on);
+  } else if(counterOfCyclesForAction == defDeactivationLights) {
+    mudaEstadorelays(off);
   }
 
 }
 
-void mudaEstadoReles(State estado) {
-  for (const int &n : reles) {
+void mudaEstadorelays(State estado) {
+  for (const int &n : relays) {
     digitalWrite(n, !estado);
   }
 }
 
-void acionaLuzesTemporariamente() {
+void turnOnLightsTemporarily() {
 
-  if(checkAction(botao1)) {
+  if(checkAction(button1)) {
     // seria legal piscar um led aqui indicando ter recebido comando
-    mudaEstadoReles(on);
-    acionamentoTemporario += 10;
+    mudaEstadorelays(on);
+    temporaryActivationCounter += 10;
   }
 
 }
