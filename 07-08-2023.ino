@@ -1,4 +1,5 @@
 int sensorLuz = A0;
+int botao1 = A1;
 int acionador1 = 7;
 int acionador2 = 8;
 int luminosidade;
@@ -7,6 +8,7 @@ int contadorDeCiclosParaAcionamento = 0;
 int defAcionaLuzes = 3;
 int defApagaLuzes = 0;
 int reles[2] = {acionador1, acionador2};
+int acionamentoTemporario = 0;
 
 enum State {
   on = true,
@@ -17,6 +19,7 @@ void setup() {
   
   pinMode(acionador1, OUTPUT);
   pinMode(acionador2, OUTPUT);
+  pinMode(botao1, INPUT);
   
   Serial.begin(9600);
 
@@ -31,9 +34,10 @@ void loop() {
   printFunction();
 //  controleRele1();
 //  controleRele2();
+  acionaLuzesTemporariamente();
   controleCrepuscular();
   
-  delay(3000);
+  delay(1000);
   
 }
 
@@ -46,13 +50,18 @@ void setupInitialState() {
 
 void printFunction() {
   
-  Serial.print(" Luminosidade atual: ");
+  Serial.print("Luminosidade atual: ");
   Serial.println(luminosidade);
-  Serial.print(String("Contador de ciclos (") + defApagaLuzes + "-" + defAcionaLuzes + "): ");
+  Serial.print(String("Contador para alteração de estado (") + defApagaLuzes + "-" + defAcionaLuzes + "): ");
   Serial.println(contadorDeCiclosParaAcionamento);
+  Serial.print("Valor do Botao1: ");
+  Serial.println(analogRead(botao1));
+  Serial.print("Acionamento temporário desliga em: ");
+  Serial.println(acionamentoTemporario);
   
 }
 
+// Ter apenas um controle para acionamento, passando rele por parâmetro, eliminando boilerplate
 void controleRele1() {
   
   if(luminosidade < defDia) {
@@ -78,7 +87,9 @@ void controleCrepuscular() {
   if(luminosidade < defDia && contadorDeCiclosParaAcionamento < defAcionaLuzes) {
    contadorDeCiclosParaAcionamento ++;
   } else {
-    if(luminosidade > defDia && contadorDeCiclosParaAcionamento > defApagaLuzes) {
+    if(acionamentoTemporario > 0) {
+        acionamentoTemporario --;
+    } else if(luminosidade > defDia && contadorDeCiclosParaAcionamento > defApagaLuzes) {
       contadorDeCiclosParaAcionamento --;
     } else {
       decideAcionamento();
@@ -101,4 +112,24 @@ void mudaEstadoReles(State estado) {
   for (const int &n : reles) {
     digitalWrite(n, !estado);
   }
+}
+
+void acionaLuzesTemporariamente() {
+
+  if(checkAction(botao1)) {
+    // seria legal piscar um led aqui indicando ter recebido comando
+    mudaEstadoReles(on);
+    acionamentoTemporario += 10;
+  }
+
+}
+
+bool checkAction(int elemento) {
+
+  if(analogRead(elemento) > 500) {
+    return true;
+  } else {
+    return false;
+  }
+
 }
