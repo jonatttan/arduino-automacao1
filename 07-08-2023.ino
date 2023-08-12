@@ -1,6 +1,7 @@
 // IN
 int lightSensor = A0;
 int button1 = A1;
+int button2 = A2;
 
 // OUT
 int relay1 = 7;
@@ -10,7 +11,7 @@ int indicatorLight2 = 3;
 
 // CONST
 const int defDay = 80;
-const int defActivationLights = 3;
+const int defActivationLights = 60;
 const int defDeactivationLights = 0;
 const int relays[2] = {relay1, relay2};
 const int defaultDelay = 1000;
@@ -19,6 +20,7 @@ const int defaultDelay = 1000;
 int counterOfCyclesForAction = 0;
 int temporaryActivationCounter = 0;
 int luminosity;
+bool manuallyDeactivateInternalLight = false;
 
 enum State {
   on = true,
@@ -32,6 +34,7 @@ void setup() {
   pinMode(indicatorLight1, OUTPUT);
   pinMode(indicatorLight2, OUTPUT);
   pinMode(button1, INPUT);
+  pinMode(button2, INPUT);
   
   Serial.begin(9600);
 
@@ -45,6 +48,7 @@ void loop() {
   
   printFunction();
   turnOnLightsTemporarily();
+  turnOffInternalLightVerify();  
   twilightControl();
   
   delay(defaultDelay);
@@ -62,19 +66,21 @@ void setupInitialState() {
 
 void printFunction() {
   
-  Serial.print("luminosity atual: ");
+  Serial.print("Liminosidade atual: ");
   Serial.println(luminosity);
-  Serial.print(String("Contador para alteração de estado (") + defDeactivationLights + "-" + defActivationLights + "): ");
+  Serial.print(String("Contador para alteracao de estado (") + defDeactivationLights + "-" + defActivationLights + "): ");
   Serial.println(counterOfCyclesForAction);
-  Serial.print("Valor do button1: ");
+  Serial.print("Valor do botao1: ");
   Serial.println(analogRead(button1));
-  Serial.print("Acionamento temporário desliga em: ");
+  Serial.print("Valor do botao2: ");
+  Serial.println(analogRead(button2));
+  Serial.print("Acionamento temporario desliga em: ");
   Serial.println(temporaryActivationCounter);
   
 }
 
 void twilightControl() {
-  
+
   if(luminosity < defDay && counterOfCyclesForAction < defActivationLights) {
    counterOfCyclesForAction ++;
   } else {
@@ -83,6 +89,7 @@ void twilightControl() {
     } else if(luminosity > defDay && counterOfCyclesForAction > defDeactivationLights) {
       counterOfCyclesForAction --;
     } else {
+      
       decideToTrigger();
     }
   }
@@ -90,16 +97,24 @@ void twilightControl() {
 }
 
 void decideToTrigger() {
+
   State state = (counterOfCyclesForAction == defActivationLights) ? on : off;
   changeRalaysState(state);
-  digitalWrite(indicatorLight1, state);
 
 }
 
-void changeRalaysState(State estado) {
+void changeRalaysState(State state) {
+
   for (const int &n : relays) {
-    digitalWrite(n, !estado);
+    if(manuallyDeactivateInternalLight && state == off) {
+      manuallyDeactivateInternalLight = false;
+    } else if(manuallyDeactivateInternalLight && n == relay2) {
+      break;
+    }
+    digitalWrite(n, !state);
+    digitalWrite(indicatorLight1, state);
   }
+
 }
 
 void turnOnLightsTemporarily() {
@@ -107,14 +122,14 @@ void turnOnLightsTemporarily() {
   if(checkAction(button1)) {
     changeRalaysState(on);
     temporaryActivationCounter += 300; // With default dalay == 1000, this is five minutes
-    flashigLight(indicatorLight2);
+    flashingLight(indicatorLight2);
   }
 
 }
 
-bool checkAction(int elemento) {
+bool checkAction(int element) {
 
-  if(analogRead(elemento) > 500) {
+  if(analogRead(element) > 500) {
     return true;
   } else {
     return false;
@@ -122,10 +137,23 @@ bool checkAction(int elemento) {
 
 }
 
-void flashigLight(int element) {
+void flashingLight(int element) {
 
   digitalWrite(element, HIGH);
   delay(100);
   digitalWrite(element, LOW);
+
+}
+
+void turnOffInternalLightVerify() {
+
+  if(checkAction(button2)) {
+    manuallyDeactivateInternalLight = !manuallyDeactivateInternalLight;
+    flashingLight(indicatorLight2);
+  }
+
+  if(manuallyDeactivateInternalLight) {
+    digitalWrite(relay2, HIGH);
+  }
 
 }
