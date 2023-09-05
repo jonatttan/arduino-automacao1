@@ -1,3 +1,5 @@
+#include "pitches.h"
+
 // IN
 int lightSensor = A0;
 int button1 = A1;
@@ -8,9 +10,10 @@ int relay1 = 7;
 int relay2 = 8;
 int indicatorLight1 = 2;
 int indicatorLight2 = 3;
+int buzzer = 12;
 
 // CONST
-const int defDay = 80;
+const int defDay = 150;
 const int defActivationLights = 60;
 const int defDeactivationLights = 0;
 const int relays[2] = {relay1, relay2};
@@ -33,6 +36,7 @@ void setup() {
   pinMode(relay2, OUTPUT);
   pinMode(indicatorLight1, OUTPUT);
   pinMode(indicatorLight2, OUTPUT);
+  pinMode(buzzer, OUTPUT);
   pinMode(button1, INPUT);
   pinMode(button2, INPUT);
   
@@ -120,8 +124,9 @@ void changeRalaysState(State state) {
 void turnOnLightsTemporarily() {
 
   if(checkAction(button1)) {
+    soundSignalManualActiveLights();
     changeRalaysState(on);
-    temporaryActivationCounter += 300; // With default dalay == 1000, this is five minutes
+    temporaryActivationCounter += 900; // With default dalay == 1000, this is fifteen minutes
     flashingLight(indicatorLight2);
   }
 
@@ -142,12 +147,12 @@ void flashingLight(int element) {
   digitalWrite(element, HIGH);
   delay(100);
   digitalWrite(element, LOW);
-
 }
 
 void turnOffInternalLightVerify() {
 
   if(checkAction(button2)) {
+    soundSignal();
     manuallyDeactivateInternalLight = !manuallyDeactivateInternalLight;
     flashingLight(indicatorLight2);
   }
@@ -156,4 +161,53 @@ void turnOffInternalLightVerify() {
     digitalWrite(relay2, HIGH);
   }
 
+}
+
+void soundSignal() {
+
+  int melody[] = {
+    NOTE_C4, NOTE_G3, NOTE_G3, NOTE_A3, NOTE_G3, 0, NOTE_B3, NOTE_C4
+  };
+
+  int noteDurations[] = {
+    4, 8, 8, 4, 4, 4, 4, 4
+  };
+
+  // iterate over the notes of the melody:
+  for (int thisNote = 0; thisNote < 8; thisNote++) {
+
+    // to calculate the note duration, take one second divided by the note type.
+    //e.g. quarter note = 1000 / 4, eighth note = 1000/8, etc.
+    int noteDuration = 1000 / noteDurations[thisNote];
+    tone(buzzer, melody[thisNote], noteDuration);
+
+    // to distinguish the notes, set a minimum time between them.
+    // the note's duration + 30% seems to work well:
+    int pauseBetweenNotes = noteDuration * 1.30;
+    delay(pauseBetweenNotes);
+    // stop the tone playing:
+    noTone(buzzer);
+  }
+  
+}
+
+void soundSignalManualActiveLights() {
+
+  int melody[] = {
+    NOTE_A1, NOTE_A2, 0, NOTE_A5, NOTE_A3
+  };
+
+  int noteDurations[] = {
+    4, 8, 8, 4, 2
+  };
+
+  for (int thisNote = 0; thisNote < 5; thisNote++) {
+    int noteDuration = 1000 / noteDurations[thisNote];
+    tone(buzzer, melody[thisNote], noteDuration);
+    
+    int pauseBetweenNotes = noteDuration * 1.30;
+    delay(pauseBetweenNotes);
+    noTone(buzzer);
+  }
+  
 }
