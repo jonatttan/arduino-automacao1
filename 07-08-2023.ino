@@ -13,7 +13,7 @@ int indicatorLight2 = 3;
 int buzzer = 12;
 
 // CONST
-const int defDay = 150;
+const int defDay = 550;
 const int defActivationLights = 60;
 const int defDeactivationLights = 0;
 const int relays[2] = {relay1, relay2};
